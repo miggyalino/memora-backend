@@ -12,3 +12,85 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id         String      @id @default(cuid())
+  email      String      @unique
+  name       String?
+  workspaces Workspace[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Workspace {
+  id                       String                     @id @default(cuid())
+  name                     String
+  description              String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  // relationships
+  workspaceTasks           WorkspaceTasks[]
+  workspaceDocuments       WorkspaceDocuments[]
+  workspaceFlashCardsGroup WorkspaceFlashCardsGroup[]
+  workspaceQuizzes         WorkspaceQuiz[]
+  user                     User?                      @relation(fields: [userId], references: [id])
+  userId                   String?
+}
+
+model WorkspaceQuiz {
+  id               String                   @id @default(cuid())
+  title            String
+  description      String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  flashCardGroupId String
+  flashCardGroup   WorkspaceFlashCardsGroup @relation(fields: [flashCardGroupId], references: [id])
+  workspace        Workspace                @relation(fields: [workspaceId], references: [id])
+  workspaceId      String
+}
+
+model WorkspaceTasks {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+}
+
+model WorkspaceDocuments {
+  id          String    @id @default(cuid())
+  filename    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+}
+
+model WorkspaceFlashCardsGroup {
+  id          String                @id @default(cuid())
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  workspace   Workspace             @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+  flashCards  WorkspaceFlashCards[]
+  quizzes     WorkspaceQuiz[]
+}
+
+model WorkspaceFlashCards {
+  id        String                   @id @default(cuid())
+  question  String
+  answer    String
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  group     WorkspaceFlashCardsGroup @relation(fields: [groupId], references: [id])
+  groupId   String
+}
